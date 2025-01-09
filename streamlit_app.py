@@ -52,24 +52,10 @@ def login_page():
             user = st.session_state.user_manager.authenticate_user(username, password)
             if user:
                 st.session_state.current_user = user
-                # Role-based welcome message
-                if user.role == UserRole.ADMIN:
-                    st.markdown("""
-                        <div class='welcome-admin'>
-                            <h2>👋 Welcome, Administrator!</h2>
-                            <p>You have full access to manage inventory and users.</p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.markdown("""
-                        <div class='welcome-partner'>
-                            <h2>👋 Welcome, Partner!</h2>
-                            <p>You can view and monitor inventory status.</p>
-                        </div>
-                    """, unsafe_allow_html=True)
+                st.success("✅ Login successful!")
                 st.experimental_rerun()
             else:
-                st.error("❌ Invalid username or password")
+                st.error("❌ Invalid username or password. Default admin credentials are admin/admin123")
 
     # Registration section
     st.markdown("---")
