@@ -5,6 +5,8 @@ import streamlit as st
 from inventory import InventoryManager
 from inventory.user import UserRole
 from inventory.user_manager import UserManager
+from inventory.export_manager import InventoryExporter
+from datetime import datetime
 
 def init_session_state():
     """Initialize session state variables."""
@@ -115,10 +117,37 @@ def inventory_page():
         with st.sidebar:
             st.header("Admin Controls")
 
-            # API Sync button (disabled for now)
-            st.button("Sync with Unimall B2B", 
-                     disabled=True, 
-                     help="API key not configured. Please configure API key to enable synchronization.")
+            # Export section
+            st.subheader("📊 Export Inventory")
+            export_format = st.selectbox(
+                "Export Format",
+                ["PDF", "Excel"],
+                key="export_format"
+            )
+
+            if st.button("Generate Report", key="export_btn"):
+                products = st.session_state.inventory.get_all_products()
+                exporter = InventoryExporter()
+
+                try:
+                    if export_format == "PDF":
+                        buffer = exporter.to_pdf(products)
+                        st.download_button(
+                            label="📥 Download PDF",
+                            data=buffer.getvalue(),
+                            file_name=f"inventory_report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                            mime="application/pdf"
+                        )
+                    else:  # Excel
+                        buffer = exporter.to_excel(products)
+                        st.download_button(
+                            label="📥 Download Excel",
+                            data=buffer.getvalue(),
+                            file_name=f"inventory_report_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+                except Exception as e:
+                    st.error(f"Error generating report: {str(e)}")
 
             st.markdown("---")
 
