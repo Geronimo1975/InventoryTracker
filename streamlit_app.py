@@ -53,7 +53,7 @@ def login_page():
             if user:
                 st.session_state.current_user = user
                 st.success("✅ Login successful!")
-                st.experimental_rerun()
+                st.rerun()  # Updated from experimental_rerun
             else:
                 st.error("❌ Invalid username or password. Default admin credentials are admin/admin123")
 
@@ -96,7 +96,7 @@ def inventory_page():
     with col3:
         if st.button("Logout"):
             st.session_state.current_user = None
-            st.experimental_rerun()
+            st.rerun()  # Updated from experimental_rerun
 
     # Admin-only section
     if user.role == UserRole.ADMIN:
@@ -184,7 +184,7 @@ def inventory_page():
                     if st.button("Remove", key=f"remove_{product['name']}"):
                         st.session_state.inventory.remove_product(product['name'])
                         st.success("Product removed!")
-                        st.experimental_rerun()
+                        st.rerun()  # Updated from experimental_rerun
 
 def main():
     """Main application entry point."""
