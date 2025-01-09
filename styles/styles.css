@@ -25,58 +25,60 @@ div.css-1v0mbdj.e115fcil1 {
 
 /* Style for login form */
 div.stForm {
-    background: linear-gradient(145deg, #ffffff, #fce4ec);
+    background: #ffffff;
     padding: 2rem;
-    border-radius: 15px;
-    box-shadow: 0 8px 32px rgba(233, 30, 99, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 2rem;
-    border: 1px solid rgba(233, 30, 99, 0.1);
+    border: 1px solid #e0e0e0;
 }
 
 /* Input field styling */
 div.stTextInput input, div.stSelectbox select {
-    border: 2px solid #E91E63;
-    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 8px;
     transition: all 0.3s ease;
 }
 
 div.stTextInput input:focus, div.stSelectbox select:focus {
-    border-color: #FF4081;
-    box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.2);
+    border-color: #E91E63;
+    box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.1);
 }
 
 /* Welcome screen animations */
 .welcome-admin {
     animation: fadeIn 1s ease-out;
-    background: linear-gradient(135deg, #E91E63, #FF4081);
-    padding: 2rem;
-    border-radius: 15px;
+    background: #E91E63;
+    padding: 1.5rem;
+    border-radius: 8px;
     color: white;
     margin: 1rem 0;
 }
 
 .welcome-partner {
     animation: fadeIn 1s ease-out;
-    background: linear-gradient(135deg, #C2185B, #E91E63);
-    padding: 2rem;
-    border-radius: 15px;
+    background: #C2185B;
+    padding: 1.5rem;
+    border-radius: 8px;
     color: white;
     margin: 1rem 0;
 }
 
 /* Custom button styles */
 .stButton>button {
-    background: linear-gradient(45deg, #E91E63, #FF4081) !important;
+    background: #E91E63 !important;
     color: white !important;
     border: none !important;
     padding: 0.5rem 2rem !important;
-    border-radius: 25px !important;
+    border-radius: 4px !important;
     transition: all 0.3s ease !important;
+    font-weight: 500 !important;
 }
 
 .stButton>button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3) !important;
+    background: #C2185B !important;
+    transform: translateY(-1px);
 }
 
 /* Success message styling */
@@ -86,6 +88,6 @@ div.element-container.css-1e5imcs.e1tzin5v1 {
 
 /* Error message styling */
 div.stAlert {
-    border-radius: 10px;
+    border-radius: 4px;
     animation: fadeIn 0.5s ease-out;
 }
