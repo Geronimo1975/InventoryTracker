@@ -8,6 +8,62 @@ from inventory.user_manager import UserManager
 from inventory.export_manager import InventoryExporter
 from datetime import datetime
 
+# Theme configuration
+THEMES = {
+    "Default Magenta": {
+        "primary": "#E91E63",
+        "secondary": "#C2185B",
+        "background": "#FFFFFF",
+        "text": "#333333"
+    },
+    "Ocean Blue": {
+        "primary": "#1976D2",
+        "secondary": "#0D47A1",
+        "background": "#F5F5F5",
+        "text": "#212121"
+    },
+    "Forest Green": {
+        "primary": "#2E7D32",
+        "secondary": "#1B5E20",
+        "background": "#FFFFFF",
+        "text": "#333333"
+    },
+    "Royal Purple": {
+        "primary": "#7B1FA2",
+        "secondary": "#4A148C",
+        "background": "#F3E5F5",
+        "text": "#212121"
+    }
+}
+
+def apply_theme(theme_colors):
+    """Apply selected theme to the application."""
+    st.markdown(f"""
+        <style>
+        :root {{
+            --primary-color: {theme_colors['primary']};
+            --secondary-color: {theme_colors['secondary']};
+            --background-color: {theme_colors['background']};
+            --text-color: {theme_colors['text']};
+        }}
+        .stButton>button {{
+            background-color: var(--primary-color) !important;
+            color: white !important;
+        }}
+        .stButton>button:hover {{
+            background-color: var(--secondary-color) !important;
+        }}
+        .welcome-admin {{
+            background-color: var(--primary-color);
+            color: white;
+        }}
+        .welcome-partner {{
+            background-color: var(--secondary-color);
+            color: white;
+        }}
+        </style>
+    """, unsafe_allow_html=True)
+
 def init_session_state():
     """Initialize session state variables."""
     if 'inventory' not in st.session_state:
@@ -26,20 +82,16 @@ def init_session_state():
     if 'current_user' not in st.session_state:
         st.session_state.current_user = None
 
-    if 'last_sync_time' not in st.session_state:
-        st.session_state.last_sync_time = None
+    if 'theme' not in st.session_state:
+        st.session_state.theme = "Default Magenta"
 
 def login_page():
     """Display login form."""
-    # Apply custom styles
-    st.markdown("""
-        <style>
-        @import url('styles/styles.css');
-        </style>
-    """, unsafe_allow_html=True)
-
     st.title("🔐 Inventory Management System")
     st.markdown("### Welcome to the System")
+
+    # Apply current theme
+    apply_theme(THEMES[st.session_state.theme])
 
     with st.form(key="login"):
         username = st.text_input("👤 Username")
@@ -56,6 +108,18 @@ def login_page():
                 st.rerun()  # Updated from experimental_rerun
             else:
                 st.error("❌ Invalid username or password. Default admin credentials are admin/admin123")
+
+    # Theme selector
+    st.sidebar.markdown("### 🎨 Theme Settings")
+    selected_theme = st.sidebar.selectbox(
+        "Choose Theme",
+        list(THEMES.keys()),
+        index=list(THEMES.keys()).index(st.session_state.theme)
+    )
+
+    if selected_theme != st.session_state.theme:
+        st.session_state.theme = selected_theme
+        st.rerun()
 
     # Registration section
     st.markdown("---")
@@ -82,21 +146,35 @@ def login_page():
 
 def inventory_page():
     """Display inventory management interface."""
+    # Apply current theme
+    apply_theme(THEMES[st.session_state.theme])
+
     st.title("Inventory Management System")
     user = st.session_state.current_user
+
+    # Theme selector in sidebar
+    st.sidebar.markdown("### 🎨 Theme Settings")
+    selected_theme = st.sidebar.selectbox(
+        "Choose Theme",
+        list(THEMES.keys()),
+        index=list(THEMES.keys()).index(st.session_state.theme)
+    )
+
+    if selected_theme != st.session_state.theme:
+        st.session_state.theme = selected_theme
+        st.rerun()
 
     # Display user info and logout button
     col1, col2, col3 = st.columns([2, 1, 1])
     with col1:
         st.write(f"Logged in as: {user.username} ({user.role.value})")
     with col2:
-        # API sync status (only for admins)
         if user.role == UserRole.ADMIN:
             st.info("API Sync: Not configured")
     with col3:
         if st.button("Logout"):
             st.session_state.current_user = None
-            st.rerun()  # Updated from experimental_rerun
+            st.rerun()
 
     # Admin-only section
     if user.role == UserRole.ADMIN:
@@ -184,7 +262,7 @@ def inventory_page():
                     if st.button("Remove", key=f"remove_{product['name']}"):
                         st.session_state.inventory.remove_product(product['name'])
                         st.success("Product removed!")
-                        st.rerun()  # Updated from experimental_rerun
+                        st.rerun()
 
 def main():
     """Main application entry point."""

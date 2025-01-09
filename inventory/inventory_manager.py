@@ -2,105 +2,148 @@
 InventoryManager class module for the Inventory Management System.
 """
 from typing import Dict, Optional, List
+from contextlib import contextmanager
 from .product import Product
-
+from .database import SessionLocal, DBProduct
 
 class InventoryManager:
     """
-    Manages the inventory of products.
-    
-    Attributes:
-        _products (Dict[str, Product]): Dictionary storing products with name as key
+    Manages the inventory of products using PostgreSQL database.
     """
 
-    def __init__(self):
-        """Initialize an empty inventory."""
-        self._products: Dict[str, Product] = {}
+    @contextmanager
+    def get_db(self):
+        """Get database session context."""
+        db = SessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
 
     def add_product(self, name: str, price: float, quantity: int) -> None:
         """
         Add a new product to the inventory.
-        
+
         Args:
             name (str): Product name
             price (float): Product price
             quantity (int): Initial quantity
-            
+
         Raises:
             ValueError: If product already exists or invalid input
         """
-        if name.strip() in self._products:
-            raise ValueError(f"Product '{name}' already exists in inventory")
-        
-        product = Product(name=name, price=price, quantity=quantity)
-        self._products[product.name] = product
+        with self.get_db() as db:
+            # Check if product exists
+            existing = db.query(DBProduct).filter(DBProduct.name == name.strip()).first()
+            if existing:
+                raise ValueError(f"Product '{name}' already exists in inventory")
+
+            # Create new product
+            db_product = DBProduct(
+                name=name.strip(),
+                price=price,
+                quantity=quantity
+            )
+            db.add(db_product)
+            db.commit()
 
     def remove_product(self, name: str) -> None:
         """
         Remove a product from the inventory.
-        
+
         Args:
             name (str): Name of the product to remove
-            
+
         Raises:
             KeyError: If product doesn't exist
         """
-        if name.strip() not in self._products:
-            raise KeyError(f"Product '{name}' not found in inventory")
-        
-        del self._products[name.strip()]
+        with self.get_db() as db:
+            product = db.query(DBProduct).filter(DBProduct.name == name.strip()).first()
+            if not product:
+                raise KeyError(f"Product '{name}' not found in inventory")
+
+            db.delete(product)
+            db.commit()
 
     def update_quantity(self, name: str, new_quantity: int) -> None:
         """
         Update the quantity of an existing product.
-        
+
         Args:
             name (str): Product name
             new_quantity (int): New quantity value
-            
+
         Raises:
             KeyError: If product doesn't exist
             ValueError: If quantity is invalid
         """
-        if name.strip() not in self._products:
-            raise KeyError(f"Product '{name}' not found in inventory")
-        
-        self._products[name.strip()].update_quantity(new_quantity)
+        if not isinstance(new_quantity, int) or new_quantity < 0:
+            raise ValueError("Quantity must be a non-negative integer")
+
+        with self.get_db() as db:
+            product = db.query(DBProduct).filter(DBProduct.name == name.strip()).first()
+            if not product:
+                raise KeyError(f"Product '{name}' not found in inventory")
+
+            product.quantity = new_quantity
+            db.commit()
 
     def retrieve_product_info(self, name: str) -> Optional[Dict[str, any]]:
         """
         Retrieve information about a specific product.
-        
+
         Args:
             name (str): Product name
-            
+
         Returns:
             Optional[Dict[str, any]]: Product information or None if not found
         """
-        product = self._products.get(name.strip())
-        return product.get_product_info() if product else None
+        with self.get_db() as db:
+            product = db.query(DBProduct).filter(DBProduct.name == name.strip()).first()
+            if not product:
+                return None
+
+            return {
+                "name": product.name,
+                "price": product.price,
+                "quantity": product.quantity,
+                "total_value": product.price * product.quantity
+            }
 
     def get_total_inventory_value(self) -> float:
         """
         Calculate the total value of all products in inventory.
-        
+
         Returns:
             float: Total value of inventory
         """
-        return sum(product.price * product.quantity for product in self._products.values())
+        with self.get_db() as db:
+            products = db.query(DBProduct).all()
+            return sum(product.price * product.quantity for product in products)
 
     def get_all_products(self) -> List[Dict[str, any]]:
         """
         Get information about all products in inventory.
-        
+
         Returns:
             List[Dict[str, any]]: List of product information dictionaries
         """
-        return [product.get_product_info() for product in self._products.values()]
+        with self.get_db() as db:
+            products = db.query(DBProduct).all()
+            return [{
+                "name": product.name,
+                "price": product.price,
+                "quantity": product.quantity,
+                "total_value": product.price * product.quantity
+            } for product in products]
 
     def __str__(self) -> str:
         """Return a string representation of the inventory."""
-        if not self._products:
+        products = self.get_all_products()
+        if not products:
             return "Inventory is empty"
-        
-        return "\n".join(str(product) for product in self._products.values())
+
+        return "\n".join(
+            f"{product['name']} - Price: ${product['price']:.2f}, Quantity: {product['quantity']}"
+            for product in products
+        )

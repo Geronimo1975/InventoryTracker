@@ -2,62 +2,108 @@
 User management functionality for the Inventory Management System.
 """
 from typing import Dict, Optional
+from contextlib import contextmanager
 from .user import User, UserRole
-
+from .database import SessionLocal, DBUser
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class UserManager:
     """
-    Manages user accounts in the system.
-    
-    Attributes:
-        _users (Dict[str, User]): Dictionary storing users with username as key
+    Manages user accounts in the system using PostgreSQL database.
     """
+
+    @contextmanager
+    def get_db(self):
+        """Get database session context."""
+        db = SessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
 
     def __init__(self):
         """Initialize with a default admin user."""
-        self._users: Dict[str, User] = {}
-        # Create default admin user if not exists
-        if "admin" not in self._users:
-            self.register_user("admin", "admin123", UserRole.ADMIN)
+        with self.get_db() as db:
+            # Create default admin user if not exists
+            admin = db.query(DBUser).filter(DBUser.username == "admin").first()
+            if not admin:
+                admin_user = DBUser(
+                    username="admin",
+                    password_hash=generate_password_hash("admin123"),
+                    role=UserRole.ADMIN.value,
+                    is_active=1
+                )
+                db.add(admin_user)
+                db.commit()
 
     def register_user(self, username: str, password: str, role: UserRole) -> None:
         """
         Register a new user.
-        
+
         Args:
             username (str): Username
             password (str): Password
             role (UserRole): User role
-            
+
         Raises:
             ValueError: If username already exists
         """
-        if username in self._users:
-            raise ValueError(f"Username '{username}' already exists")
-        
-        user = User.create(username, password, role)
-        self._users[username] = user
+        with self.get_db() as db:
+            if db.query(DBUser).filter(DBUser.username == username).first():
+                raise ValueError(f"Username '{username}' already exists")
+
+            user = DBUser(
+                username=username,
+                password_hash=generate_password_hash(password),
+                role=role.value,
+                is_active=1
+            )
+            db.add(user)
+            db.commit()
 
     def authenticate_user(self, username: str, password: str) -> Optional[User]:
         """
         Authenticate a user with username and password.
-        
+
         Args:
             username (str): Username
             password (str): Password
-            
+
         Returns:
             Optional[User]: User object if authentication successful, None otherwise
         """
-        user = self._users.get(username)
-        if user and user.check_password(password):
-            return user
+        with self.get_db() as db:
+            db_user = db.query(DBUser).filter(DBUser.username == username).first()
+            if db_user and check_password_hash(db_user.password_hash, password):
+                return User(
+                    username=db_user.username,
+                    password_hash=db_user.password_hash,
+                    role=UserRole(db_user.role),
+                    is_active=bool(db_user.is_active)
+                )
         return None
 
     def get_user(self, username: str) -> Optional[User]:
         """Get user by username."""
-        return self._users.get(username)
+        with self.get_db() as db:
+            db_user = db.query(DBUser).filter(DBUser.username == username).first()
+            if db_user:
+                return User(
+                    username=db_user.username,
+                    password_hash=db_user.password_hash,
+                    role=UserRole(db_user.role),
+                    is_active=bool(db_user.is_active)
+                )
+        return None
 
     def get_all_users(self) -> Dict[str, Dict]:
         """Get all users as dictionary."""
-        return {username: user.to_dict() for username, user in self._users.items()}
+        with self.get_db() as db:
+            users = db.query(DBUser).all()
+            return {
+                user.username: {
+                    "username": user.username,
+                    "role": user.role,
+                    "is_active": bool(user.is_active)
+                } for user in users
+            }
