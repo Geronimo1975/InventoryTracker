@@ -15,6 +15,7 @@ class Product:
         price (float): The price of the product
         quantity (int): The quantity in stock
     """
+    # 
     name: str
     price: float
     quantity: int
