@@ -29,40 +29,68 @@ def init_session_state():
 
 def login_page():
     """Display login form."""
-    st.title("Login")
+    # Apply custom styles
+    st.markdown("""
+        <style>
+        @import url('styles/styles.css');
+        </style>
+    """, unsafe_allow_html=True)
 
-    with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+    st.title("🔐 Inventory Management System")
+    st.markdown("### Welcome to the System")
 
-        if st.form_submit_button("Login"):
+    with st.form(key="login"):
+        username = st.text_input("👤 Username")
+        password = st.text_input("🔑 Password", type="password")
+        col1, col2, col3 = st.columns([1,2,1])
+        with col2:
+            submit = st.form_submit_button("Login", use_container_width=True)
+
+        if submit:
             user = st.session_state.user_manager.authenticate_user(username, password)
             if user:
                 st.session_state.current_user = user
-                st.success(f"Welcome, {username}!")
+                # Role-based welcome message
+                if user.role == UserRole.ADMIN:
+                    st.markdown("""
+                        <div class='welcome-admin'>
+                            <h2>👋 Welcome, Administrator!</h2>
+                            <p>You have full access to manage inventory and users.</p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown("""
+                        <div class='welcome-partner'>
+                            <h2>👋 Welcome, Partner!</h2>
+                            <p>You can view and monitor inventory status.</p>
+                        </div>
+                    """, unsafe_allow_html=True)
                 st.experimental_rerun()
             else:
-                st.error("Invalid username or password")
+                st.error("❌ Invalid username or password")
 
     # Registration section
     st.markdown("---")
-    st.subheader("Register New Account")
+    st.markdown("### 📝 Create New Account")
 
-    with st.form("register_form"):
-        new_username = st.text_input("New Username")
-        new_password = st.text_input("New Password", type="password")
-        role = st.selectbox("Account Type", ["partner", "admin"])
+    with st.form(key="register"):
+        new_username = st.text_input("👤 New Username")
+        new_password = st.text_input("🔑 New Password", type="password")
+        role = st.selectbox("🎭 Account Type", ["partner", "admin"])
+        col1, col2, col3 = st.columns([1,2,1])
+        with col2:
+            register = st.form_submit_button("Register", use_container_width=True)
 
-        if st.form_submit_button("Register"):
+        if register:
             try:
                 st.session_state.user_manager.register_user(
                     new_username,
                     new_password,
                     UserRole.ADMIN if role == "admin" else UserRole.PARTNER
                 )
-                st.success("Registration successful! Please login.")
+                st.success("✅ Registration successful! Please login.")
             except ValueError as e:
-                st.error(str(e))
+                st.error(f"❌ {str(e)}")
 
 def inventory_page():
     """Display inventory management interface."""

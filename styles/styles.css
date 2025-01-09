@@ -1,0 +1,91 @@
+/* Modern Magenta Theme for Inventory Management System */
+
+/* Animation for the login container */
+@keyframes slideIn {
+    0% {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Animation for success messages */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Custom styles for the login page */
+div.css-1v0mbdj.e115fcil1 {
+    animation: slideIn 0.5s ease-out;
+}
+
+/* Style for login form */
+div.stForm {
+    background: linear-gradient(145deg, #ffffff, #fce4ec);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(233, 30, 99, 0.1);
+    margin-bottom: 2rem;
+    border: 1px solid rgba(233, 30, 99, 0.1);
+}
+
+/* Input field styling */
+div.stTextInput input, div.stSelectbox select {
+    border: 2px solid #E91E63;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+div.stTextInput input:focus, div.stSelectbox select:focus {
+    border-color: #FF4081;
+    box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.2);
+}
+
+/* Welcome screen animations */
+.welcome-admin {
+    animation: fadeIn 1s ease-out;
+    background: linear-gradient(135deg, #E91E63, #FF4081);
+    padding: 2rem;
+    border-radius: 15px;
+    color: white;
+    margin: 1rem 0;
+}
+
+.welcome-partner {
+    animation: fadeIn 1s ease-out;
+    background: linear-gradient(135deg, #C2185B, #E91E63);
+    padding: 2rem;
+    border-radius: 15px;
+    color: white;
+    margin: 1rem 0;
+}
+
+/* Custom button styles */
+.stButton>button {
+    background: linear-gradient(45deg, #E91E63, #FF4081) !important;
+    color: white !important;
+    border: none !important;
+    padding: 0.5rem 2rem !important;
+    border-radius: 25px !important;
+    transition: all 0.3s ease !important;
+}
+
+.stButton>button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3) !important;
+}
+
+/* Success message styling */
+div.element-container.css-1e5imcs.e1tzin5v1 {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Error message styling */
+div.stAlert {
+    border-radius: 10px;
+    animation: fadeIn 0.5s ease-out;
+}
