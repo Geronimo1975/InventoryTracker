@@ -7,6 +7,8 @@ from inventory.user import UserRole
 from inventory.user_manager import UserManager
 from inventory.export_manager import InventoryExporter
 from datetime import datetime
+from collections import deque
+import json
 
 # Theme configuration
 THEMES = {
@@ -35,6 +37,9 @@ THEMES = {
         "text": "#212121"
     }
 }
+
+# Maximum number of notifications to keep
+MAX_NOTIFICATIONS = 50
 
 def apply_theme(theme_colors):
     """Apply selected theme to the application."""
@@ -68,7 +73,6 @@ def init_session_state():
     """Initialize session state variables."""
     if 'inventory' not in st.session_state:
         st.session_state.inventory = InventoryManager()
-        # Add sample products
         try:
             st.session_state.inventory.add_product("Laptop", 999.99, 5)
             st.session_state.inventory.add_product("Mouse", 29.99, 20)
@@ -84,6 +88,36 @@ def init_session_state():
 
     if 'theme' not in st.session_state:
         st.session_state.theme = "Default Magenta"
+
+    # Initialize notifications queue
+    if 'notifications' not in st.session_state:
+        st.session_state.notifications = deque(maxlen=MAX_NOTIFICATIONS)
+
+def add_notification(message: str, notification_type: str = "info"):
+    """Add a new notification to the queue."""
+    st.session_state.notifications.appendleft({
+        "message": message,
+        "type": notification_type,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "user": st.session_state.current_user.username if st.session_state.current_user else "System"
+    })
+
+def show_notifications():
+    """Display notifications in the sidebar."""
+    if st.session_state.notifications:
+        with st.sidebar:
+            st.markdown("### 🔔 Recent Activity")
+            for notif in st.session_state.notifications:
+                if notif['type'] == "success":
+                    icon = "✅"
+                elif notif['type'] == "error":
+                    icon = "❌"
+                else:
+                    icon = "ℹ️"
+
+                with st.expander(f"{icon} {notif['timestamp']}", expanded=False):
+                    st.write(f"**{notif['message']}**")
+                    st.caption(f"By: {notif['user']}")
 
 def login_page():
     """Display login form."""
@@ -104,8 +138,9 @@ def login_page():
             user = st.session_state.user_manager.authenticate_user(username, password)
             if user:
                 st.session_state.current_user = user
+                add_notification(f"User {username} logged in", "success") # Added notification
                 st.success("✅ Login successful!")
-                st.rerun()  # Updated from experimental_rerun
+                st.rerun()
             else:
                 st.error("❌ Invalid username or password. Default admin credentials are admin/admin123")
 
@@ -152,6 +187,9 @@ def inventory_page():
     st.title("Inventory Management System")
     user = st.session_state.current_user
 
+    # Show notifications
+    show_notifications()
+
     # Theme selector in sidebar
     st.sidebar.markdown("### 🎨 Theme Settings")
     selected_theme = st.sidebar.selectbox(
@@ -173,6 +211,7 @@ def inventory_page():
             st.info("API Sync: Not configured")
     with col3:
         if st.button("Logout"):
+            add_notification(f"User {user.username} logged out", "info")
             st.session_state.current_user = None
             st.rerun()
 
@@ -225,8 +264,10 @@ def inventory_page():
                 if st.form_submit_button("Add Product"):
                     try:
                         st.session_state.inventory.add_product(name, price, quantity)
+                        add_notification(f"Added new product: {name}", "success")
                         st.success(f"Added product: {name}")
                     except ValueError as e:
+                        add_notification(f"Failed to add product: {name}", "error")
                         st.error(str(e))
 
     # Display inventory
@@ -257,10 +298,17 @@ def inventory_page():
 
                 with col3:
                     if st.button("Update", key=f"update_{product['name']}"):
+                        old_qty = product['quantity']
                         st.session_state.inventory.update_quantity(product['name'], new_quantity)
+                        add_notification(
+                            f"Updated {product['name']} quantity: {old_qty} → {new_quantity}",
+                            "success"
+                        )
                         st.success("Quantity updated!")
+
                     if st.button("Remove", key=f"remove_{product['name']}"):
                         st.session_state.inventory.remove_product(product['name'])
+                        add_notification(f"Removed product: {product['name']}", "success")
                         st.success("Product removed!")
                         st.rerun()
 
