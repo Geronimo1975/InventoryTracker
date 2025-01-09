@@ -24,6 +24,9 @@ def init_session_state():
     if 'current_user' not in st.session_state:
         st.session_state.current_user = None
 
+    if 'last_sync_time' not in st.session_state:
+        st.session_state.last_sync_time = None
+
 def login_page():
     """Display login form."""
     st.title("Login")
@@ -67,17 +70,31 @@ def inventory_page():
     user = st.session_state.current_user
 
     # Display user info and logout button
-    col1, col2 = st.columns([3, 1])
+    col1, col2, col3 = st.columns([2, 1, 1])
     with col1:
         st.write(f"Logged in as: {user.username} ({user.role.value})")
     with col2:
+        # API sync status (only for admins)
+        if user.role == UserRole.ADMIN:
+            st.info("API Sync: Not configured")
+    with col3:
         if st.button("Logout"):
             st.session_state.current_user = None
             st.experimental_rerun()
 
-    # Admin-only section for adding new products
+    # Admin-only section
     if user.role == UserRole.ADMIN:
         with st.sidebar:
+            st.header("Admin Controls")
+
+            # API Sync button (disabled for now)
+            st.button("Sync with Unimall B2B", 
+                     disabled=True, 
+                     help="API key not configured. Please configure API key to enable synchronization.")
+
+            st.markdown("---")
+
+            # Add new product form
             st.header("Add New Product")
             with st.form("add_product_form"):
                 name = st.text_input("Product Name")
